@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nekø Michelin — Goodbye</title>
+  <meta name="description" content="Loading… poi verrai reindirizzato alla traccia su SoundCloud.">
+  <style>
+    html, body { margin:0; padding:0; height:100%; background:#000; }
+    .wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#000; }
+    video { width:100vw; height:100vh; object-fit:cover; }
+    .sr-only{ position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Il video deve essere muto per l'autoplay su mobile -->
+    <video id="intro" src="/loading.mp4" muted playsinline loop autoplay></video>
+    <p class="sr-only">Caricamento… tra pochi secondi verrai reindirizzato a SoundCloud.</p>
+  </div>
+
+<script>
+  // === Config ===
+  const SOUND_URL = "https://soundcloud.com/neko-michelin/goodbye";
+  const FALLBACK_URL = "https://ffm.to/goodbye-nekomichelin";
+
+  // Sorgente: query ?src= oppure referrer, altrimenti 'direct'
+  const url = new URL(window.location.href);
+  const SRC = url.searchParams.get("src") || document.referrer || "direct";
+
+  // Ping anonimo di "view"
+  (function logView(){
+    const beaconUrl = `/api/redirect?event=view&source=${encodeURIComponent(SRC)}`;
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(beaconUrl);
+      } else {
+        // fallback GET "fire and forget"
+        new Image().src = beaconUrl + "&_=" + Date.now();
+      }
+    } catch(e){ /* silenzio */ }
+  })();
+
+  // Dopo 3s (durata intro), prova prima SoundCloud, poi fallback
+  const INTRO_MS = 3000;
+  setTimeout(() => {
+    // Log + redirect a SoundCloud
+    window.location.href = `/api/redirect?target=soundcloud&source=${encodeURIComponent(SRC)}&to=${encodeURIComponent(SOUND_URL)}`;
+
+    // Se non si apre l'app entro ~2.5s, fallback
+    setTimeout(() => {
+      window.location.href = `/api/redirect?target=fallback&source=${encodeURIComponent(SRC)}&to=${encodeURIComponent(FALLBACK_URL)}`;
+    }, 2500);
+  }, INTRO_MS);
+</script>
+</body>
+</html>
